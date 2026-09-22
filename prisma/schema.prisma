@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String    @unique
+  email        String?   @unique
+  passwordHash String
+  points       Int       @default(0)
+  createdAt    DateTime  @default(now())
+
+  posts        Post[]
+  comments     Comment[]
+}
+
+model Post {
+  id        String    @id @default(cuid())
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // The three lines of the poem (上の句 / 中の句 / 下の句)
+  line1     String
+  line2     String
+  line3     String
+
+  // Mora (拍) counts for each line, computed at submission time
+  mora1     Int
+  mora2     Int
+  mora3     Int
+  // true when mora counts are an exact 5-7-5 match
+  isPerfect Boolean   @default(false)
+
+  imageUrl  String?
+
+  createdAt DateTime  @default(now())
+
+  comments  Comment[]
+
+  @@index([createdAt])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  body       String
+
+  // Set when the commenter opted into 5-7-5 mode
+  isHaikuAttempt Boolean @default(false)
+  // Set when the 5-7-5 attempt was an exact match and earned a reward
+  isHaikuReward  Boolean @default(false)
+
+  createdAt  DateTime @default(now())
+
+  @@index([postId, createdAt])
+}
